@@ -9,9 +9,14 @@ def main():
     scatter_plot = ScatterPlot(x, y, title='Sample Scatter Plot with Units',
                                quadgraph='ABCD', level='MILD')
     scatter_plot.create_plot()  # This creates the plot
+
+    # Specify the logo position here, for example "upper right"
+    scatter_plot.add_logo(logo_position="upper left")
+
     scatter_plot.save('scatter_plot_with_classification.png', dpi=300)  # Now save it
 
 
 if __name__ == "__main__":
     main()
+
 

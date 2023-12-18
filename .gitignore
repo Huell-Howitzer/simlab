@@ -168,3 +168,9 @@ myplot.png
 my_plot.svg
 
 scatter_plot_with_classification.png
+
+logo.png
+
+*.png
+
+*.svg

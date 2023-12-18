@@ -160,3 +160,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+
+my_plot.png
+
+myplot.png
+
+my_plot.svg
+
+scatter_plot_with_classification.png

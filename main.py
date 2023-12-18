@@ -1,19 +1,26 @@
+import numpy as np
 from simlab.dataviz.scatter_plot import ScatterPlot
 from simlab.dataviz import ureg
 
 
 def main():
-    x = [1, 2, 3, 4, 5] * ureg.hours
-    y = [10, 20, 30, 40, 50] * ureg.miles
+    # Initialize the ScatterPlot instance
+    scatter_plot = ScatterPlot(title='Sample Scatter Plot with Units', quadgraph='ABCD', level='MILD', figsize=(10, 6))
 
-    scatter_plot = ScatterPlot(x, y, title='Sample Scatter Plot with Units',
-                               quadgraph='ABCD', level='MILD')
-    scatter_plot.create_plot()  # This creates the plot
+    # Generate and add 8 data series
+    for i in range(8):
+        x = np.linspace(1, 10, 10) * ureg.hours
+        y = (i + 1) * np.linspace(1, 10, 10) * ureg.miles
+        scatter_plot.add_data_series(x, y)
 
-    # Specify the logo position here, for example "upper right"
+    # Create the plot
+    scatter_plot.create_plot()
+
+    # Specify the logo position
     scatter_plot.add_logo(logo_position="upper left")
 
-    scatter_plot.save('scatter_plot_with_classification.png', dpi=300)  # Now save it
+    # Save the plot
+    scatter_plot.save('scatter_plot_with_classification.png', dpi=300)
 
 
 if __name__ == "__main__":

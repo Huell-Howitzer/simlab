@@ -1,0 +1,4 @@
+
+Upython:S11722"1Remove the unused function parameter "file_type".(èİæüÿÿÿÿ8ØµÏÇ1
+Lpython:S1481:"(Remove the unused local variable "anim".(¬—ß¨ÿÿÿÿÿ8ØµÏÇ1
+cpython:S6711L"DUse a "numpy.random.Generator" here instead of this legacy function.(ôÜàç8ØµÏÇ1

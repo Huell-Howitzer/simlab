@@ -1,10 +1,12 @@
-from .plot_base import PlotBase
 from . import ureg
-from ..classification import QuadGraph, Level, add_classification_banner
+from .plot_base import PlotBase
+from ..classification import QuadGraph, Level
 
 
 class ScatterPlot(PlotBase):
-    def __init__(self, title='Scatter Plot', quadgraph=None, level=None, figsize=(10, 6)):
+    def __init__(
+        self, title="Scatter Plot", quadgraph=None, level=None, figsize=(10, 6)
+    ):
         # Use enums to set classification text
         classification_text = self._get_classification_text(quadgraph, level)
         super().__init__(title, classification_text, figsize)
@@ -27,9 +29,13 @@ class ScatterPlot(PlotBase):
 
     def create_plot(self):
         for x_data, y_data in self.data_series:
-            self.ax.scatter(x_data.magnitude, y_data.magnitude)
+            # Check if data has 'magnitude' attribute (ureg.Quantity) or not (numpy array)
+            x_values = x_data.magnitude if hasattr(x_data, "magnitude") else x_data
+            y_values = y_data.magnitude if hasattr(y_data, "magnitude") else y_data
+            self.ax.scatter(x_values, y_values)
+
         self.ax.set_title(self.title)
-        # Set the x and y labels using the first data series
+
         if self.data_series:
             self.ax.set_xlabel(self._get_units_label(self.data_series[0][0]))
             self.ax.set_ylabel(self._get_units_label(self.data_series[0][1]))

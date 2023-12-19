@@ -1,7 +1,8 @@
-import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+
+import matplotlib.pyplot as plt
 from matplotlib import image as mpimg
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 from ..classification import add_classification_banner
 
@@ -17,23 +18,16 @@ class PlotBase(ABC):
         if self.classification:
             add_classification_banner(self.fig, self.classification)
 
-        # Initialize x_data and y_data as None
-        self.x_data = None
-        self.y_data = None
-
-    def set_data(self, x_data, y_data):
-        self.x_data = x_data
-        self.y_data = y_data
-
+    @abstractmethod
     def create_plot(self):
-        if self.x_data is not None and self.y_data is not None:
-            self.ax.scatter(self.x_data, self.y_data, zorder=1)
-        else:
-            raise ValueError("Data not set")
+        pass
 
-    from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-
-    def add_logo(self, logo_path="/home/ryan-howell/projects/simlab/logo.png", logo_position="upper left", scale_factor=0.1):
+    def add_logo(
+        self,
+        logo_path="/home/ryan-howell/projects/simlab/logo.png",
+        logo_position="upper left",
+        scale_factor=0.1,
+    ):
         logo_image = mpimg.imread(logo_path)
         dpi = self.fig.dpi
 
@@ -42,30 +36,38 @@ class PlotBase(ABC):
 
         # Define padding as a fraction of figure size
         padding_x = 0.025  # 2.5% of figure width
-        # Adjust padding_y to position above the plot area
         padding_y_above = 0.1  # 10% above the figure height
 
         # Define position for the logo in figure space
-        if logo_position == "upper left":
-            position = (0 + padding_x, 1 + padding_y_above)
-        elif logo_position == "upper right":
-            position = (1 - padding_x, 1 + padding_y_above)
-        # Other positions as needed...
+        position = {
+            "upper left": (0 + padding_x, 1 + padding_y_above),
+            "upper right": (1 - padding_x, 1 + padding_y_above),
+        }.get(
+            logo_position, (0.5, 0.5)
+        )  # Default to center
 
         # Create an annotation box for the logo
-        logo_box = AnnotationBbox(imagebox, position,
-                                  xycoords='figure fraction',
-                                  boxcoords="figure fraction",
-                                  box_alignment=(0, 1),  # Align the top-left of the logo box with the position
-                                  frameon=False)
+        logo_box = AnnotationBbox(
+            imagebox,
+            position,
+            xycoords="figure fraction",
+            boxcoords="figure fraction",
+            box_alignment=(0.5, 0.5),
+            frameon=False,
+        )
 
         # Add the logo to the figure instead of the plot
         self.fig.add_artist(logo_box)
 
     def save(self, filename, **kwargs):
-        bbox_extra_artists = kwargs.pop('bbox_extra_artists', None)
-        plt.grid(True, which='both', color='white', linestyle='-', linewidth=0.9);
-        plt.savefig(filename, bbox_inches='tight', bbox_extra_artists=bbox_extra_artists, **kwargs)
+        bbox_extra_artists = kwargs.pop("bbox_extra_artists", None)
+        plt.grid(True, which="both", color="white", linestyle="-", linewidth=0.9)
+        plt.savefig(
+            filename,
+            bbox_inches="tight",
+            bbox_extra_artists=bbox_extra_artists,
+            **kwargs
+        )
 
     def show(self):
         plt.show()

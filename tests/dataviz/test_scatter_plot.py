@@ -12,7 +12,7 @@ class TestScatterPlot(unittest.TestCase):
     def setUp(self):
         # Any setup you want to do before each test goes here
         self.test_output_path = Path("test_output.png")
-        self.reference_image_path = Path("resources/scatter_test000.png")
+        self.reference_image_path = Path("../resources/scatter_test000.png")
 
     def test_init(self):
         plot = ScatterPlot(title="Test Scatter Plot", quadgraph="ABCD", level="MILD")

@@ -20,7 +20,7 @@ class TestPlotBase(unittest.TestCase):
     def test_add_logo(self):
         plot = TestPlot(title="Test Plot", classification="Test", figsize=(10, 6))
         plot.add_logo(
-            logo_path="/home/ryan-howell/projects/simlab/logo.png",
+            logo_path="/logo.png",
             logo_position="upper left",
         )
         # Asserts to check if logo was added correctly

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Set your environment variable name and value here
+ENV_VAR_NAME="MY_ENV_VAR"
+ENV_VAR_VALUE="my_value"
+
+# Export the environment variable
+export $ENV_VAR_NAME=$ENV_VAR_VALUE
+
+echo "Environment variable '$ENV_VAR_NAME' set to '$ENV_VAR_VALUE'"

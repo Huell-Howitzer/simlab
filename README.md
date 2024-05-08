@@ -13,7 +13,7 @@
 | 03/07  | 9  | 0  |
 | 03/08  | 2  | 6  |
 
-'''python
+```python
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 # Initialize the SPARQL wrapper for Wikidata
@@ -35,4 +35,4 @@ if results["results"]["bindings"]:
         print(f"The mass of the AMRAAM missile is {mass} kg (assuming kilograms as the unit).")
 else:
     print("No mass data available for the AMRAAM missile.")
-'''
+```

@@ -36,3 +36,21 @@ if results["results"]["bindings"]:
 else:
     print("No mass data available for the AMRAAM missile.")
 ```
+
+
+
+https://www.coursera.org/account/accomplishments/verify/AW6E4W4WX5BG?utm_source=ios&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=course
+
+
+
+https://www.coursera.org/account/accomplishments/verify/A8KGW5C74DDV?utm_source=ios&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=course
+
+https://www.coursera.org/account/accomplishments/verify/9KXX6QHGXA6X?utm_source=ios&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=course
+
+https://www.coursera.org/account/accomplishments/verify/GMGTR3V7D5ZX?utm_source=ios&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=course
+
+https://www.coursera.org/account/accomplishments/verify/46CFLTTZAH23?utm_source=ios&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=course
+
+https://wwww.coursera.org/account/accomplishments/specialization/GYQB8ELADGD5
+
+https://www.coursera.org/account/accomplishments/verify/PRFEMXVKRFKJ?utm_source=ios&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=course

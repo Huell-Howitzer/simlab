@@ -54,3 +54,63 @@ https://www.coursera.org/account/accomplishments/verify/46CFLTTZAH23?utm_source=
 https://wwww.coursera.org/account/accomplishments/specialization/GYQB8ELADGD5
 
 https://www.coursera.org/account/accomplishments/verify/PRFEMXVKRFKJ?utm_source=ios&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=course
+
+
+
+'''python
+import os
+import subprocess
+
+def get_connected_monitors():
+    result = subprocess.run(['xrandr', '--listmonitors'], stdout=subprocess.PIPE)
+    output = result.stdout.decode()
+    lines = output.split('\n')
+    monitors = []
+    for line in lines[1:]:
+        if line.strip():
+            parts = line.split()
+            monitors.append(parts[-1])
+    return monitors
+
+def set_single_monitor():
+    monitors = get_connected_monitors()
+    if len(monitors) < 2:
+        print("Already in single monitor mode.")
+        return
+    
+    main_monitor = monitors[0]
+    os.system(f"xrandr --output {monitors[1]} --off")
+    os.system(f"xrandr --output {main_monitor} --primary --auto")
+    print(f"Switched to single monitor mode with {main_monitor} as the primary display.")
+
+def set_dual_monitors():
+    monitors = get_connected_monitors()
+    if len(monitors) < 2:
+        print("Not enough monitors detected for dual monitor setup.")
+        return
+    
+    main_monitor = monitors[0]
+    secondary_monitor = monitors[1]
+    os.system(f"xrandr --output {secondary_monitor} --auto --right-of {main_monitor}")
+    os.system(f"xrandr --output {main_monitor} --primary --auto")
+    print(f"Switched to dual monitor mode with {main_monitor} as the primary display and {secondary_monitor} on the right.")
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Manage monitor setups.')
+    parser.add_argument('--single', action='store_true', help='Set up single monitor mode')
+    parser.add_argument('--dual', action='store_true', help='Set up dual monitor mode')
+    
+    args = parser.parse_args()
+    
+    if args.single:
+        set_single_monitor()
+    elif args.dual:
+        set_dual_monitors()
+    else:
+        print("Please specify --single or --dual")
+
+if __name__ == "__main__":
+    main()
+'''

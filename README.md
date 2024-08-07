@@ -114,3 +114,85 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+```python
+import pandas as pd
+import datashader as ds
+import datashader.transfer_functions as tf
+import colorcet as cc
+import matplotlib.pyplot as plt
+from datashader.utils import export_image
+from pathlib import Path
+import re
+import holoviews as hv
+from holoviews.operation.datashader import datashade
+from bokeh.io import output_notebook, show
+
+hv.extension('bokeh')
+output_notebook()
+
+def extract(file_path):
+    """
+    Extract data from a CSV file and return as a DataFrame.
+    Adjust this function according to the specific format of your CSV files.
+    """
+    return pd.read_csv(file_path)
+
+def collect_data(base_path, pattern):
+    """
+    Traverse through directories and collect data from CSV files matching the pattern.
+    """
+    base_path = Path(base_path)
+    all_dataframes = []
+    regex = re.compile(pattern)
+
+    for case_dir in base_path.iterdir():
+        if case_dir.is_dir():
+            for data_file in case_dir.glob("*.csv"):
+                if regex.search(data_file.name):
+                    df = extract(data_file)
+                    all_dataframes.append(df)
+    
+    # Concatenate all DataFrames into one
+    combined_data = pd.concat(all_dataframes, ignore_index=True)
+    return combined_data
+
+def plot_data(estimated_df, actual_df):
+    """
+    Plot altitude vs time using Datashader, highlighting the actual data.
+    """
+    # Plot the estimated data
+    canvas = ds.Canvas(plot_width=800, plot_height=800)
+    agg_estimated = canvas.points(estimated_df, 'time', 'altitude')
+    img_estimated = tf.shade(agg_estimated, cmap=cc.fire)
+    
+    # Convert the Datashader image to an array for overlaying the actual data
+    agg_actual = canvas.line(actual_df, 'time', 'altitude', agg=ds.count())
+    img_actual = tf.shade(agg_actual, cmap=["red"], how='linear')
+
+    # Overlay the actual data on top of the estimated data
+    combined_img = tf.stack(img_estimated, img_actual, how="over")
+
+    export_image(combined_img, 'datashader_combined_plot')
+
+    # Display the plot
+    plt.imshow(combined_img.to_pil())
+    plt.axis('off')
+    plt.show()
+
+# Define the base path where your estimated data is located
+base_path = '/home/data/'
+
+# Define the regex pattern to match filenames with four digits
+filename_pattern = r'\d{4}'
+
+# Collect data from all CSV files (estimated data) matching the pattern
+combined_estimated_data = collect_data(base_path, filename_pattern)
+
+# Read the special actual data
+actual_data_file = '/home/data/special_data.csv'
+actual_data = extract(actual_data_file)
+
+# Plot the combined estimated data and highlight the actual data
+plot_data(combined_estimated_data, actual_data)
+```

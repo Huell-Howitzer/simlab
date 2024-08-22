@@ -1,5 +1,757 @@
 # simlab
 
+## one time updater
+
+```shell
+function run_updates {
+    local repo_path="$1"
+    local updates_dir="$repo_path/updates"
+    local current_commit=$(git -C "$repo_path" rev-parse HEAD)
+    local latest_commit=$(git -C "$repo_path" rev-parse origin/main)
+
+    git -C "$repo_path" fetch --quiet
+
+    # Loop through commits from current to latest
+    while [ "$current_commit" != "$latest_commit" ]; do
+        current_commit=$(git -C "$repo_path" rev-parse $current_commit~1)
+        local update_script="$updates_dir/$current_commit.sh"
+
+        if [ -f "$update_script" ]; then
+            bash "$update_script"
+        fi
+    done
+
+    git -C "$repo_path" pull --ff-only --quiet
+}
+```
+
+```shell
+if [ "$(git -C "$repo_path" rev-parse HEAD)" == "$(git -C "$repo_path" rev-parse origin/main)" ]; then
+    git -C "$repo_path" pull --ff-only --quiet
+fi
+
+# Clean up the script if it has been removed upstream
+if ! git -C "$repo_path" ls-files --error-unmatch "$update_script" > /dev/null 2>&1; then
+    rm -f "$update_script"
+fi
+```
+
+maybe:
+```shell
+# Configuration
+UPDATE_DIR="$HOME/.salsa/updates"
+VERSION_FILE="$HOME/.salsa/.update_version"
+LOG_FILE="$HOME/.salsa/update.log"
+LOCK_FILE="$HOME/.salsa/.update_lock"
+
+# Function to acquire a lock (prevents concurrent execution)
+function acquire_lock {
+    exec 200>"$LOCK_FILE"
+    flock -n 200 || { echo "Another update process is running. Exiting."; exit 1; }
+}
+
+# Function to run updates
+function run_updates {
+    acquire_lock
+    trap "release_lock" EXIT
+
+    local repo_path="$HOME/.salsa"
+    local current_version
+
+    # Read the current version
+    if [ -f "$VERSION_FILE" ]; then
+        current_version=$(cat "$VERSION_FILE")
+    else
+        current_version="0.0.0"
+    fi
+
+    # Fetch tags from the remote repository
+    git -C "$repo_path" fetch --tags --quiet
+    local latest_tag=$(git -C "$repo_path" describe --tags $(git -C "$repo_path" rev-list --tags --max-count=1))
+
+    # Stage updates in a temporary directory
+    local tmp_dir=$(mktemp -d)
+    cp -r "$UPDATE_DIR"/* "$tmp_dir"
+
+    # Apply updates based on tags
+    for update_script in $(ls "$tmp_dir"/*.sh | sort); do
+        local update_tag=$(basename "$update_script" .sh)
+
+        if [ "$(version_compare "$update_tag" "$current_version")" -gt 0 ]; then
+            echo "Applying update $update_tag..." | tee -a "$LOG_FILE"
+            
+            # Execute the update script in a restricted environment
+            if bash -euo pipefail "$update_script" >> "$LOG_FILE" 2>&1; then
+                echo "Update $update_tag applied successfully." | tee -a "$LOG_FILE"
+                echo "$update_tag" > "$VERSION_FILE"
+            else
+                echo "Update $update_tag failed. Check the log for details." | tee -a "$LOG_FILE"
+                # Optionally trigger rollback here
+                exit 1
+            fi
+        fi
+    done
+
+    # Clean up temporary directory
+    rm -rf "$tmp_dir"
+
+    # Pull the latest changes
+    git -C "$repo_path" pull --ff-only --quiet
+
+    # Remove obsolete update scripts
+    for update_script in "$UPDATE_DIR"/*.sh; do
+        local update_tag=$(basename "$update_script" .sh)
+
+        if [ "$(version_compare "$update_tag" "$latest_tag")" -le 0 ]; then
+            rm -f "$update_script"
+        fi
+    done
+}
+
+# Function to release the lock
+function release_lock {
+    flock -u 200
+    rm -f "$LOCK_FILE"
+}
+
+# Version comparison function
+function version_compare {
+    # Compare two version strings (e.g., 1.0.0 vs 1.0.1)
+    # Return 1 if $1 > $2, 0 if equal, -1 if $1 < $2
+    local v1=(${1//./ })
+    local v2=(${2//./ })
+
+    for i in 0 1 2; do
+        if [[ ${v1[i]} -gt ${v2[i]} ]]; then
+            return 1
+        elif [[ ${v1[i]} -lt ${v2[i]} ]]; then
+            return -1
+        fi
+    done
+
+    return 0
+}
+
+# Main logic of the .salsarc script
+function setup_environment {
+    # Run the update checks
+    run_updates
+
+    # Set up the environment as needed for your tools
+    export PATH="$HOME/.salsa/bin:$PATH"
+    # Additional setup can go here
+}
+
+# Run the main setup
+setup_environment
+
+```
+
+
+for bashrc:
+```shell
+# <<< salsarc begin
+alias salsa='source ~/.salsa/.salsarc && export PATH=$PATH:~/.salsa/bin'
+
+function salsa_version {
+    if [ -f "$HOME/.salsa/.version" ]; then
+        echo "salsa version: $(cat $HOME/.salsa/.version)"
+    else
+        echo "salsa version: unknown"
+    fi
+}
+
+if [[ "$1" == "--version" ]]; then
+    salsa_version
+    return
+fi
+# >>> salsarc end
+```
+
+
+```shell
+# Configuration
+UPDATE_DIR="$HOME/.salsa/updates"
+VERSION_FILE="$HOME/.salsa/.version"
+LOG_FILE="$HOME/.salsa/update.log"
+LOCK_FILE="$HOME/.salsa/.update_lock"
+MAIN_BRANCH="main"
+
+# Function to acquire a lock (prevents concurrent execution)
+function acquire_lock {
+    exec 200>"$LOCK_FILE"
+    flock -n 200 || { echo "Another update process is running. Exiting."; exit 1; }
+}
+
+# Function to release the lock
+function release_lock {
+    flock -u 200
+    rm -f "$LOCK_FILE"
+}
+
+# Function to get the current tag
+function get_current_tag {
+    if [ -f "$VERSION_FILE" ]; then
+        cat "$VERSION_FILE"
+    else
+        echo "0.0.0"
+    fi
+}
+
+# Function to prompt user with Zenity
+function zenity_prompt_for_update {
+    zenity --question --text="New updates are available. Do you want to apply them now?" --title="Salsa Updates"
+    return $?
+}
+
+# Function to run updates incrementally based on tags
+function run_updates {
+    acquire_lock
+    trap "release_lock" EXIT
+
+    local repo_path="$HOME/.salsa"
+    local current_tag=$(get_current_tag)
+
+    # Fetch the latest tags from the remote repository
+    git -C "$repo_path" fetch --tags --quiet
+
+    # Get a list of tags in ascending order
+    local tags=($(git -C "$repo_path" tag --sort=v:refname))
+
+    # Check if any updates are needed
+    local updates_needed=0
+    for tag in "${tags[@]}"; do
+        if [ "$(version_compare "$tag" "$current_tag")" -gt 0 ]; then
+            updates_needed=1
+            break
+        fi
+    done
+
+    # If updates are needed, prompt the user with Zenity
+    if [ "$updates_needed" -eq 1 ]; then
+        zenity_prompt_for_update
+        if [ $? -ne 0 ]; then
+            echo "Update skipped by user."
+            return
+        fi
+    fi
+
+    # Apply updates sequentially
+    for tag in "${tags[@]}"; do
+        if [ "$(version_compare "$tag" "$current_tag")" -gt 0 ]; then
+            local update_script="$UPDATE_DIR/$tag.sh"
+
+            if [ -f "$update_script" ]; then
+                echo "Applying update for tag $tag..." | tee -a "$LOG_FILE"
+                
+                # Execute the update script
+                if bash -euo pipefail "$update_script" >> "$LOG_FILE" 2>&1; then
+                    echo "Update for tag $tag applied successfully." | tee -a "$LOG_FILE"
+                    echo "$tag" > "$VERSION_FILE"
+                else
+                    echo "Update for tag $tag failed. Check the log for details." | tee -a "$LOG_FILE"
+                    exit 1
+                fi
+            fi
+        fi
+    done
+
+    # Ensure the user is on the main branch and not in a detached HEAD state
+    git -C "$repo_path" checkout $MAIN_BRANCH --quiet
+    git -C "$repo_path" pull --ff-only --quiet
+
+    # Clean up temporary files and old scripts
+    for tag in "${tags[@]}"; do
+        local update_script="$UPDATE_DIR/$tag.sh"
+
+        if [ -f "$update_script" ] && [ "$(version_compare "$tag" "$current_tag")" -le 0 ]; then
+            rm -f "$update_script"
+        fi
+    done
+}
+
+# Version comparison function
+function version_compare {
+    local v1=(${1//./ })
+    local v2=(${2//./ })
+
+    for i in 0 1 2; do
+        if [[ ${v1[i]} -gt ${v2[i]} ]]; then
+            return 1
+        elif [[ ${v1[i]} -lt ${v2[i]} ]]; then
+            return -1
+        fi
+    done
+
+    return 0
+}
+
+# Main logic of the .salsarc script
+function setup_environment {
+    run_updates
+
+    # Set up the environment as needed for your tools
+    export PATH="$HOME/.salsa/bin:$PATH"
+    # Additional setup can go here
+}
+
+# Run the main setup
+setup_environment
+```
+
+
+
+
+```shell
+# Configuration
+UPDATE_DIR="$HOME/.salsa/updates"
+VERSION_FILE="$HOME/.salsa/.version"
+LOG_FILE="$HOME/.salsa/update.log"
+LOCK_FILE="$HOME/.salsa/.update_lock"
+MAIN_BRANCH="main"
+BACKUP_DIR="$HOME/.salsa/backup"
+
+# Function to acquire a lock (prevents concurrent execution)
+function acquire_lock {
+    exec 200>"$LOCK_FILE"
+    flock -n 200 || { echo "Another update process is running. Exiting."; exit 1; }
+}
+
+# Function to release the lock
+function release_lock {
+    flock -u 200
+    rm -f "$LOCK_FILE"
+}
+
+# Function to get the current tag
+function get_current_tag {
+    if [ -f "$VERSION_FILE" ]; then
+        cat "$VERSION_FILE"
+    else
+        echo "0.0.0"
+    fi
+}
+
+# Function to backup current state
+function backup_state {
+    mkdir -p "$BACKUP_DIR"
+    local timestamp=$(date +%Y%m%d%H%M%S)
+    tar -czf "$BACKUP_DIR/backup_$timestamp.tar.gz" "$HOME/.salsa"
+}
+
+# Function to restore backup state
+function restore_backup {
+    local latest_backup=$(ls -t "$BACKUP_DIR" | head -n 1)
+    if [ -n "$latest_backup" ]; then
+        tar -xzf "$BACKUP_DIR/$latest_backup" -C "$HOME/.salsa"
+    else
+        echo "No backup available to restore."
+    fi
+}
+
+# Function to prompt user with Zenity
+function zenity_prompt_for_update {
+    zenity --question --text="New updates are available. Do you want to apply them now?" --title="Salsa Updates"
+    return $?
+}
+
+# Function to run updates incrementally based on tags
+function run_updates {
+    acquire_lock
+    trap "release_lock" EXIT
+
+    local repo_path="$HOME/.salsa"
+    local current_tag=$(get_current_tag)
+
+    # Fetch the latest tags from the remote repository
+    git -C "$repo_path" fetch --tags --quiet
+
+    # Get a list of tags in ascending order
+    local tags=($(git -C "$repo_path" tag --sort=v:refname))
+
+    # Check if any updates are needed
+    local updates_needed=0
+    for tag in "${tags[@]}"; do
+        if [ "$(version_compare "$tag" "$current_tag")" -gt 0 ]; then
+            updates_needed=1
+            break
+        fi
+    done
+
+    # If updates are needed, prompt the user with Zenity
+    if [ "$updates_needed" -eq 1 ]; then
+        zenity_prompt_for_update
+        if [ $? -ne 0 ]; then
+            echo "Update skipped by user."
+            return
+        fi
+    fi
+
+    # Backup before applying updates
+    backup_state
+
+    # Apply updates sequentially
+    for tag in "${tags[@]}"; do
+        if [ "$(version_compare "$tag" "$current_tag")" -gt 0 ]; then
+            local update_script="$UPDATE_DIR/$tag.sh"
+
+            if [ -f "$update_script" ]; then
+                echo "Applying update for tag $tag..." | tee -a "$LOG_FILE"
+                
+                # Execute the update script
+                if bash -euo pipefail "$update_script" >> "$LOG_FILE" 2>&1; then
+                    echo "Update for tag $tag applied successfully." | tee -a "$LOG_FILE"
+                    echo "$tag" > "$VERSION_FILE"
+                else
+                    echo "Update for tag $tag failed. Check the log for details." | tee -a "$LOG_FILE"
+                    restore_backup
+                    exit 1
+                fi
+            fi
+        fi
+    done
+
+    # Ensure the user is on the main branch and not in a detached HEAD state
+    git -C "$repo_path" checkout $MAIN_BRANCH --quiet
+    git -C "$repo_path" pull --ff-only --quiet
+
+    # Clean up temporary files and old scripts
+    for tag in "${tags[@]}"; do
+        local update_script="$UPDATE_DIR/$tag.sh"
+
+        if [ -f "$update_script" ] && [ "$(version_compare "$tag" "$current_tag")" -le 0 ]; then
+            rm -f "$update_script"
+        fi
+    done
+}
+
+# Version comparison function
+function version_compare {
+    local v1=(${1//./ })
+    local v2=(${2//./ })
+
+    for i in 0 1 2; do
+        if [[ ${v1[i]} -gt ${v2[i]} ]]; then
+            return 1
+        elif [[ ${v1[i]} -lt ${v2[i]} ]]; then
+            return -1
+        fi
+    done
+
+    return 0
+}
+
+# Main logic of the .salsarc script
+function setup_environment {
+    if [[ "$1" == "--help" ]]; then
+        echo "Usage: salsa [--version | --help]"
+        echo "--version: Show the current version of salsa."
+        echo "--help: Show this help message."
+        return
+    fi
+
+    run_updates
+
+    # Set up the environment as needed for your tools
+    export PATH="$HOME/.salsa/bin:$PATH"
+    # Additional setup can go here
+}
+
+# Run the main setup
+setup_environment "$@"
+```
+
+
+```shell
+# Configuration
+UPDATE_DIR="$HOME/.salsa/updates"
+VERSION_FILE="$HOME/.salsa/.version"
+LOG_FILE="$HOME/.salsa/update.log"
+ERROR_LOG="$HOME/.salsa/error.log"
+LOCK_FILE="$HOME/.salsa/.update_lock"
+MAIN_BRANCH="main"
+BACKUP_DIR="$HOME/.salsa/backup"
+
+# Function to acquire a lock (prevents concurrent execution)
+function acquire_lock {
+    exec 200>"$LOCK_FILE"
+    flock -n 200 || { echo "Another update process is running. Exiting."; exit 1; }
+}
+
+# Function to release the lock
+function release_lock {
+    flock -u 200
+    rm -f "$LOCK_FILE"
+}
+
+# Function to get the current tag
+function get_current_tag {
+    if [ -f "$VERSION_FILE" ]; then
+        cat "$VERSION_FILE"
+    else
+        echo "0.0.0"
+    fi
+}
+
+# Function to backup current state
+function backup_state {
+    mkdir -p "$BACKUP_DIR"
+    local timestamp=$(date +%Y%m%d%H%M%S)
+    tar -czf "$BACKUP_DIR/backup_$timestamp.tar.gz" "$HOME/.salsa"
+}
+
+# Function to restore backup state
+function restore_backup {
+    local latest_backup=$(ls -t "$BACKUP_DIR" | head -n 1)
+    if [ -n "$latest_backup" ]; then
+        tar -xzf "$BACKUP_DIR/$latest_backup" -C "$HOME/.salsa"
+    else
+        echo "No backup available to restore."
+    fi
+}
+
+# Function to prompt user with Zenity
+function zenity_prompt_for_update {
+    zenity --question --text="New updates are available. Do you want to apply them now?" --title="Salsa Updates"
+    return $?
+}
+
+# Function to create a GitLab issue using Python
+function create_gitlab_issue {
+    local error_message="$1"
+    python3 "$HOME/.salsa/create_issue.py" "$error_message"
+}
+
+# Function to check for and handle errors
+function handle_errors {
+    if [ -s "$ERROR_LOG" ]; then
+        local error_message=$(cat "$ERROR_LOG")
+        create_gitlab_issue "$error_message"
+        zenity --warning --text="An issue occurred during the update process. Most tooling may be unaffected." --title="Salsa Update Error"
+        rm -f "$ERROR_LOG"
+    fi
+}
+
+# Function to run git operations in the background
+function run_git_update {
+    {
+        git -C "$repo_path" checkout $MAIN_BRANCH && git -C "$repo_path" pull --ff-only
+    } &> "$ERROR_LOG" & disown
+}
+
+# Function to run updates incrementally based on tags
+function run_updates {
+    acquire_lock
+    trap "release_lock" EXIT
+
+    local repo_path="$HOME/.salsa"
+    local current_tag=$(get_current_tag)
+
+    # Fetch the latest tags from the remote repository
+    git -C "$repo_path" fetch --tags --quiet
+
+    # Get a list of tags in ascending order
+    local tags=($(git -C "$repo_path" tag --sort=v:refname))
+
+    # Check if any updates are needed
+    local updates_needed=0
+    for tag in "${tags[@]}"; do
+        if [ "$(version_compare "$tag" "$current_tag")" -gt 0 ]; then
+            updates_needed=1
+            break
+        fi
+    done
+
+    # If updates are needed, prompt the user with Zenity
+    if [ "$updates_needed" -eq 1 ]; then
+        zenity_prompt_for_update
+        if [ $? -ne 0 ]; then
+            echo "Update skipped by user."
+            return
+        fi
+    fi
+
+    backup_state
+
+    for tag in "${tags[@]}"; do
+        if [ "$(version_compare "$tag" "$current_tag")" -gt 0 ]; then
+            local update_script="$UPDATE_DIR/$tag.sh"
+
+            if [ -f "$update_script" ]; then
+                echo "Applying update for tag $tag..." | tee -a "$LOG_FILE"
+                
+                if bash -euo pipefail "$update_script" >> "$LOG_FILE" 2>&1; then
+                    echo "Update for tag $tag applied successfully." | tee -a "$LOG_FILE"
+                    echo "$tag" > "$VERSION_FILE"
+                else
+                    echo "Update for tag $tag failed. Check the log for details." | tee -a "$LOG_FILE"
+                    restore_backup
+                    exit 1
+                fi
+            fi
+        fi
+    done
+
+    # Run git operations in the background
+    run_git_update
+
+    # Handle any errors from the background git operation
+    handle_errors
+}
+
+# Version comparison function
+function version_compare {
+    local v1=(${1//./ })
+    local v2=(${2//./ })
+
+    for i in 0 1 2; do
+        if [[ ${v1[i]} -gt ${v2[i]} ]]; then
+            return 1
+        elif [[ ${v1[i]} -lt ${v2[i]} ]]; then
+            return -1
+        fi
+    done
+
+    return 0
+}
+
+# Main logic of the .salsarc script
+function setup_environment {
+    if [[ "$1" == "--help" ]]; then
+        echo "Usage: salsa [--version | --help]"
+        echo "--version: Show the current version of salsa."
+        echo "--help: Show this help message."
+        return
+    fi
+
+    run_updates
+
+    # Set up the environment as needed for your tools
+    export PATH="$HOME/.salsa/bin:$PATH"
+    # Additional setup can go here
+}
+
+# Run the main setup
+setup_environment "$@"
+```
+
+
+```
+wget -O splunkforwarder.tgz "https://www.splunk.com/page/download_track?file=8.1.0.1/splunkforwarder-8.1.0.1-Linux-x86_64.tgz&ac=home_v8_nav_download_forwarder&_ga=2.159374126.215287982.1605399396-382591215.1605399396"
+tar -xzf splunkforwarder.tgz -C /opt
+cd /opt/splunkforwarder/bin
+sudo ./splunk start --accept-license
+sudo ./splunk enable boot-start
+###
+sudo ./splunk add forward-server <SplunkServerIP>:9997
+sudo ./splunk add monitor /path/to/logfile.log
+###
+LOG_FILE="/var/log/salsa.log"
+
+log_event() {
+  local level="$1"
+  local message="$2"
+  echo "$(date +%Y-%m-%dT%H:%M:%S) [$level] $message" >> "$LOG_FILE"
+}
+
+log_event "INFO" "Starting salsa update process"
+###
+source="/var/log/salsa.log" | stats count by level, message
+```
+
+
+```bats
+#!/usr/bin/env bats
+
+# Load the .salsarc script for testing
+setup() {
+    load "../.salsarc"
+}
+
+# Test that the version command works correctly
+@test "Display the current version with salsa --version" {
+    export VERSION_FILE="../.salsa/.version"
+    echo "v1.0.0" > "$VERSION_FILE"
+    
+    run salsa --version
+    [ "$status" -eq 0 ]
+    [ "$output" = "salsa version: v1.0.0" ]
+}
+
+# Cleanup after the tests
+teardown() {
+    rm -f "$VERSION_FILE"
+}
+```
+
+```bats
+#!/usr/bin/env bats
+
+setup() {
+    mkdir -p "../.salsa/updates"
+    load "../.salsarc"
+}
+
+@test "Apply update scripts incrementally" {
+    # Set up a fake version and create mock update scripts
+    export VERSION_FILE="../.salsa/.version"
+    echo "v1.0.0" > "$VERSION_FILE"
+    
+    touch "../.salsa/updates/v1.0.1.sh"
+    echo "echo 'Running update v1.0.1'" > "../.salsa/updates/v1.0.1.sh"
+    chmod +x "../.salsa/updates/v1.0.1.sh"
+
+    touch "../.salsa/updates/v1.0.2.sh"
+    echo "echo 'Running update v1.0.2'" > "../.salsa/updates/v1.0.2.sh"
+    chmod +x "../.salsa/updates/v1.0.2.sh"
+
+    run setup_environment
+    [ "$status" -eq 0 ]
+    [ "$(cat $VERSION_FILE)" = "v1.0.2" ]
+    [ ! -f "../.salsa/updates/v1.0.1.sh" ]
+    [ ! -f "../.salsa/updates/v1.0.2.sh" ]
+}
+
+teardown() {
+    rm -f "$VERSION_FILE"
+    rm -rf "../.salsa/updates"
+}
+```
+
+```bats
+#!/usr/bin/env bats
+
+setup() {
+    mkdir -p "../.salsa"
+    touch "../.salsa/error.log"
+    load "../.salsarc"
+}
+
+@test "Git operation success" {
+    run run_git_update
+    [ "$status" -eq 0 ]
+    [ ! -s "../.salsa/error.log" ]
+}
+
+@test "Git operation failure" {
+    # Simulate a git failure by mocking the git command
+    git() {
+        return 1
+    }
+
+    run run_git_update
+    [ "$status" -eq 1 ]
+    [ -s "../.salsa/error.log" ]
+    [ "$(cat ../.salsa/error.log)" = "Your error message here" ]
+}
+
+teardown() {
+    rm -f "../.salsa/error.log"
+}
+```
+
+
+---
 
 | Date   | LS | RG |
 |--------|----|----|

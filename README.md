@@ -1039,3 +1039,105 @@ actual_data = extract(actual_data_file)
 # Plot the combined estimated data and highlight the actual data
 plot_data(combined_estimated_data, actual_data)
 ```
+
+
+
+If you have `Boost` in a `.tar.gz` file and lack `sudo` privileges to install it system-wide, you can still compile and link against `Boost.Python` by building and using a local installation of Boost. Here’s how to do it:
+
+### Step-by-Step Solution:
+
+1. **Extract the Boost .tar.gz File:**
+
+   First, extract the `Boost` archive to a local directory where you have write permissions:
+
+   ```bash
+   tar -xvzf boost_1_xx_0.tar.gz  # Replace with your specific Boost version
+   cd boost_1_xx_0
+   ```
+
+2. **Build and Install Boost Locally:**
+
+   Since you don’t have `sudo` privileges, you’ll need to install `Boost` locally. Follow these steps:
+
+   ```bash
+   # Bootstrap the build system
+   ./bootstrap.sh --prefix=$HOME/boost_local
+
+   # Build and install Boost libraries locally
+   ./b2 install
+   ```
+
+   This will build and install Boost libraries, including `Boost.Python`, to the `$HOME/boost_local` directory.
+
+3. **Write Your C++ Code with Boost.Python:**
+
+   Here’s your original `mylib.cpp` file with Boost.Python:
+
+   ```cpp
+   // mylib.cpp
+   #include <boost/python.hpp>
+
+   // Function to increment a number by reference
+   void count(int& X) {
+       X++;
+   }
+
+   // Expose the function to Python
+   BOOST_PYTHON_MODULE(mylib) {
+       using namespace boost::python;
+       def("count", count);
+   }
+   ```
+
+4. **Compile the C++ Code with Your Local Boost Installation:**
+
+   You need to specify the include and library paths to your local `Boost` installation when compiling:
+
+   ```bash
+   g++ -shared -o mylib.so -fPIC mylib.cpp -I$HOME/boost_local/include -L$HOME/boost_local/lib -lboost_python39 -lpython3.9
+   ```
+
+   Replace `python3.9` and `boost_python39` with your specific Python version. Ensure that `-fPIC` is included to generate position-independent code suitable for shared libraries.
+
+5. **Set Environment Variables to Use the Local Boost Libraries:**
+
+   Before running your Python script, set the `LD_LIBRARY_PATH` to include the directory where the locally installed Boost libraries are located:
+
+   ```bash
+   export LD_LIBRARY_PATH=$HOME/boost_local/lib:$LD_LIBRARY_PATH
+   ```
+
+6. **Write the Python Script to Use the Compiled Library:**
+
+   You can now use the compiled library in Python as follows:
+
+   ```python
+   import mylib  # Import the Boost.Python module
+
+   # Create a regular Python integer
+   x = 5
+
+   # Call the C++ function with a reference to the integer
+   mylib.count(x)
+
+   # Print the result
+   print("Value of x after calling count:", x)  # Output should be 6
+   ```
+
+7. **Run the Python Script:**
+
+   Run the Python script as you normally would:
+
+   ```bash
+   python3 your_script.py
+   ```
+
+### Explanation:
+
+- **Local Boost Installation**: By specifying a `--prefix` during the `bootstrap.sh` step, you install `Boost` locally in a directory where you have write access (`$HOME/boost_local`).
+- **Linking Against Local Boost Libraries**: When compiling the shared library, you use the `-I` and `-L` flags to include the Boost headers and libraries from your local installation.
+- **Setting `LD_LIBRARY_PATH`**: This environment variable tells the dynamic linker where to find shared libraries (`.so` files), which is necessary because the Boost.Python library is not installed in a standard system location.
+
+### Conclusion:
+
+By building and linking against a local installation of Boost, you can use Boost.Python without requiring `sudo` privileges. This approach works well in environments with restricted permissions, such as shared servers or clusters, and ensures that your Boost libraries are fully available for your project.

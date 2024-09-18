@@ -1,5 +1,12 @@
 # simlab
 
+
+- https://www.elastic.co/search-labs/blog/bsi-it-grundschutz-embeddings-semantic-search
+- https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/getting_started_with_the_gnome_desktop_environment/searching-for-files-in-gnome_getting-started-with-the-gnome-desktop-environment#performing-an-advanced-file-search_searching-for-files-in-gnome
+
+
+
+
 ```shell
 #!/usr/bin/env bash
 function get_random() {

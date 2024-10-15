@@ -1,5 +1,5 @@
 
-'''
+```stl
 solid dumpster_with_arms
   facet normal 0 0 0
     outer loop
@@ -170,4 +170,4 @@ solid dumpster_with_arms
     endloop
   endfacet
 endsolid dumpster_with_arms
-'''
+```

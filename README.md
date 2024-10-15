@@ -27,6 +27,8 @@ function get_random() {
 }
 ```
 
+![](cube.stl)
+
 ```shell
 progress_bar() {
 	LR='\033[1;31m'

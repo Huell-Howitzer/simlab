@@ -1,20 +1,50 @@
+#!/usr/bin/env python3
+"""
+packet_svg_generator.py
+
+This script reads a Mermaid-like packet description from an input file,
+generates an SVG diagram of the packet structure, and writes it to an output file.
+It ensures that the total number of bits is a power of two and automatically
+determines an appropriate layout for the SVG diagram.
+
+Usage:
+    python packet_svg_generator.py input_file output_file
+"""
+
 import re
 import sys
+import argparse
 from math import ceil
 
 def check_power_of_two(x):
+    """
+    Check if x is a power of two.
+
+    Args:
+        x (int): The value to check.
+
+    Raises:
+        ValueError: If x is not a power of two.
+    """
     i = 0
     while True:
         power = 2 ** i
         if power == x:
-            return  # Found a match, simply return (pass)
+            return  # Found a match, simply return
         if power > x:
             raise ValueError(f"{x} is not a power of 2")
         i += 1
 
 def parse_mermaid(lines):
     """
-    Parse the Mermaid-like syntax to extract the title and field definitions.
+    Parse Mermaid-like syntax from lines to extract the title and field definitions.
+
+    Args:
+        lines (list of str): Lines of Mermaid-like syntax.
+
+    Returns:
+        tuple: A tuple containing the title (str) and a list of fields.
+               Each field is represented as a tuple (start, end, label).
     """
     title = None
     in_yaml = False
@@ -51,6 +81,20 @@ def generate_svg(title, fields, scale=10, height=40, row_spacing=0,
                  margin_x=30, margin_top=60, margin_bottom=30, padding=4):
     """
     Generate an SVG string for a multi-row packet diagram.
+
+    Args:
+        title (str): The title of the packet.
+        fields (list of tuples): List of fields, where each field is (start, end, label).
+        scale (int): Scaling factor for width per bit.
+        height (int): Height of each row.
+        row_spacing (int): Vertical spacing between rows.
+        margin_x (int): Horizontal margin.
+        margin_top (int): Top margin.
+        margin_bottom (int): Bottom margin.
+        padding (int): Padding for text inside rectangles.
+
+    Returns:
+        str: The generated SVG content as a string.
     """
     # Determine total bits.
     max_bit = max(end for _, end, _ in fields)
@@ -154,29 +198,34 @@ def generate_svg(title, fields, scale=10, height=40, row_spacing=0,
     return "\n".join(svg_elements)
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: python packet_svg_generator.py input_file output_file")
-        sys.exit(1)
-
-    input_path = sys.argv[1]
-    output_path = sys.argv[2]
+    """
+    Parse command-line arguments and generate the SVG file.
+    """
+    parser = argparse.ArgumentParser(description="Generate an SVG diagram from Mermaid-like packet syntax.")
+    parser.add_argument("input_file", help="Path to input file containing Mermaid-like syntax.")
+    parser.add_argument("output_file", help="Path to output SVG file.")
+    args = parser.parse_args()
 
     try:
-        with open(input_path, 'r') as infile:
+        with open(args.input_file, 'r') as infile:
             lines = infile.readlines()
     except IOError as e:
-        print(f"Error reading {input_path}: {e}")
+        print(f"Error reading {args.input_file}: {e}")
         sys.exit(1)
 
     title, fields = parse_mermaid(lines)
-    svg_content = generate_svg(title, fields)
+    try:
+        svg_content = generate_svg(title, fields)
+    except ValueError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
 
     try:
-        with open(output_path, 'w') as outfile:
+        with open(args.output_file, 'w') as outfile:
             outfile.write(svg_content)
-        print(f"SVG diagram saved to {output_path}")
+        print(f"SVG diagram saved to {args.output_file}")
     except IOError as e:
-        print(f"Error writing to {output_path}: {e}")
+        print(f"Error writing to {args.output_file}: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

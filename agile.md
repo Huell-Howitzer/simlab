@@ -1,3 +1,54 @@
+- actions speak louder than words
+
+you had no idea what those words were.
+You heard the gitlab alternative. You
+didn't login to see if it does that. You didn't
+simply ask if it does what you're saying.
+you didn't go to gitlab and read about what it can
+do. you googled "jira alternatives" and even
+the competitor said "hey you might want to check
+out gitlab." You skimmed the article and
+found something that I find hard to believe
+you actually believed and said "looks like it
+cant do tracking?" Yes "it can do tracking."
+again, its hard to believe that after:
+
+- tech exchange 
+- having several issues assigned to you, that i told you about 
+- continued attempts to get you to express your approval in writing on issues
+- knowledge that a large portion of our staff is utilizing these features in gitlab
+
+that you did not know already that it can "do task tracking"
+
+
+this isn't something i stumbled on.
+there's no reason id be biased.
+I know what im talking about.
+I know what im doing.
+I understand what other people are doing.
+you don't seem to know what im doing.
+this isn't something i dont know about.
+every day, i work with people. i get their input.
+I think about these things even when I don't want to.
+what I'm providing is hardened, well-advised, practical,
+advice. Not utilizing that might be a bigger sin than deopping
+500k just to realize its the indian and not the arrow thats the problem
+here.
+
+
+
+
+
+
+
+if you wanna know what gitlab does, why
+wouldn't you go to their website? 
+
+- top 5 tools on a competitor site and even they told you to ise gitlab
+
+
+
+
 There are several free and open-source Agile project management tools that you can likely install via yum (for RHEL-based distributions) or apt (for Debian-based distributions). Here are some of the best options:
 
 1. Taiga

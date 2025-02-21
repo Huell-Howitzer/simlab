@@ -1,4 +1,4 @@
-```
+```mermaid
 %%{init: {"theme": "default", "themeVariables": {}}}%%
 gantt
     title Project Timeline (ggplot style)

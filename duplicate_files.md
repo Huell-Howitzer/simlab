@@ -14,6 +14,7 @@ pip install pandas pdfminer.six fuzzywuzzy python-Levenshtein odfpy tqdm
 
 📜 Complete Python Script
 
+```python
 import os
 import re
 import pandas as pd
@@ -139,6 +140,8 @@ duplicates_df = process_directory(directory_to_scan, exclude_patterns)
 output_file = "near_duplicates_report.csv"
 duplicates_df.to_csv(output_file, index=False)
 print(f"Duplicate files report saved to {output_file}")
+```
+
 
 🔧 Usage Instructions
 	1.	Replace directory_to_scan with the root path of the directory you want to scan.

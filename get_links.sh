@@ -1,0 +1,1 @@
+wget --spider --recursive --no-parent --level=5 --wait=1 --adjust-extension --reject "logout" https://gitlab.example.com

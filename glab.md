@@ -6,6 +6,7 @@ Below is an example walkthrough for creating a Python package that uses the syst
 
 Create a directory structure similar to this:
 
+```txt
 gitlab_curl_client/
 ├── gitlab_curl_client
 │   ├── __init__.py
@@ -14,6 +15,7 @@ gitlab_curl_client/
 │   └── test_client.py
 ├── README.md
 └── setup.py
+```
 
 	•	gitlab_curl_client/client.py – Contains functions that build and execute curl commands.
 	•	setup.py – Package installation script.
@@ -28,6 +30,7 @@ Here’s an example implementation using the subprocess module to call curl. In 
 
 gitlab_curl_client/client.py:
 
+```python
 import subprocess
 import json
 import os
@@ -94,6 +97,7 @@ class GitLabClient:
         data = {"name": name}
         data.update(kwargs)
         return self._run_curl("POST", "/api/v4/projects", data=data)
+```
 
 Explanation
 	•	Initialization: The GitLabClient is initialized with the GitLab host URL and a personal access token.
@@ -106,6 +110,7 @@ Explanation
 
 Create a setup.py file to make your package installable:
 
+```python
 from setuptools import setup, find_packages
 
 setup(
@@ -119,7 +124,7 @@ setup(
         "Programming Language :: Python :: 3",
     ],
 )
-
+```
 
 
 ⸻
@@ -186,7 +191,7 @@ class TestGitLabClient(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
-
+```
 
 ⸻
 
@@ -222,7 +227,9 @@ without having to re-specify the host and token every time.
 
 Updated CLI Code
 
-# gitlab_curl_client/cli.py
+# gitlab_curl_client/cli.
+
+```python
 import argparse
 import json
 import os
@@ -305,7 +312,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-
+```
 
 ⸻
 
@@ -331,6 +338,8 @@ Update setup.py for CLI Entry Point
 
 Make sure your setup.py includes the following entry point so that the CLI is available when you install the package:
 
+
+```python
 from setuptools import setup, find_packages
 
 setup(
@@ -350,7 +359,7 @@ setup(
     ],
 )
 
-
+```
 
 ⸻
 
@@ -368,7 +377,9 @@ Below is an example of extending your package to include:
 
 In your gitlab_curl_client/client.py module, add a new method (for example, named get_labels) that calls GitLab’s labels endpoint for a given project. This method also supports passing a friendly name for the project (using your config mapping) instead of a numeric ID.
 
-# gitlab_curl_client/client.py
+# gitlab_curl_client/client.
+
+```python
 import subprocess
 import json
 import os
@@ -467,14 +478,16 @@ class GitLabClient:
         return self._run_curl("GET", f"/api/v4/projects/{project_identifier}/labels")
 
 
-
+```
 ⸻
 
 2. Creating a Utility to Print Markdown Tables
 
 Create a new module (for example, gitlab_curl_client/utils.py) with a helper function that prints any list of dictionaries as a Markdown table. This function automatically determines headers based on the keys present in the data.
 
-# gitlab_curl_client/utils.py
+# gitlab_curl_client/utils.
+
+```python
 def print_markdown_table(data):
     """
     Print a list of dictionaries as a Markdown table.
@@ -499,7 +512,7 @@ def print_markdown_table(data):
         row = [str(item.get(header, "")) for header in headers]
         print("| " + " | ".join(row) + " |")
 
-
+```
 
 ⸻
 
@@ -507,7 +520,9 @@ def print_markdown_table(data):
 
 You can add a new subcommand to your CLI so you can quickly get all labels for a project and print them in a Markdown table. For example, update your gitlab_curl_client/cli.py to include a get-labels command:
 
-# gitlab_curl_client/cli.py
+# gitlab_curl_client/cli.
+
+```python
 import argparse
 import json
 import os
@@ -599,7 +614,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-
+```
 
 ⸻
 
@@ -638,6 +653,7 @@ Updated get_issues() Method
 
 Add the following method to your GitLabClient class in gitlab_curl_client/client.py:
 
+```python
 from datetime import datetime, timedelta
 import urllib.parse
 
@@ -711,7 +727,7 @@ class GitLabClient:
         else:
             raise ValueError("You must provide either a project_identifier or a group_identifier.")
 
-
+```
 
 ⸻
 
@@ -733,26 +749,32 @@ Example Usages
 
 1. Get Issues for a Specific Project (by friendly name) Within the Last 7 Days:
 
+```python
 issues_project = client.get_issues(project_identifier="PTO-Project", days=7)
 print(issues_project)
+```
 
 2. Get Issues for a Specific Group (by friendly name) Between Two Dates:
 
+```python
 issues_group = client.get_issues(
     group_identifier="PTO",
     start_date="2025-03-01T00:00:00Z",
     end_date="2025-03-15T23:59:59Z"
 )
 print(issues_group)
+```
 
 3. Get Issues for a Group Recursively (including subgroups) for the Last 14 Days:
 
+```python
 issues_group_recursive = client.get_issues(
     group_identifier="PTO",
     days=14,
     include_subgroups=True
 )
 print(issues_group_recursive)
+```
 
 This unified method gives you the flexibility to choose the scope (project or group) and the date range specification (explicit dates or relative days), while also allowing for recursive queries on groups.
 
@@ -773,7 +795,9 @@ Below is one sample implementation. (You may want to adjust the defaults—for e
 
 
 
-# gitlab_curl_client/client.py
+# gitlab_curl_client/client.
+
+```python
 from datetime import datetime, timedelta
 import urllib.parse
 
@@ -907,7 +931,7 @@ class GitLabClient:
             
         return results
 
-
+```
 
 ⸻
 
@@ -979,6 +1003,7 @@ The script assumes you have a client with a low‑level method _run_curl and a h
 
 Example Script: link_issues.py
 
+```python 
 #!/usr/bin/env python3
 import argparse
 import os
@@ -1070,7 +1095,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-
+```
 
 ⸻
 
@@ -1109,6 +1134,7 @@ Below is the full package with all files.
 
 Package Structure
 
+```txt
 gitlab_curl_client/
 ├── __init__.py
 ├── config.py
@@ -1119,7 +1145,7 @@ link_issues.py
 setup.py
 README.md
 
-
+```
 
 ⸻
 
@@ -1127,6 +1153,7 @@ File: gitlab_curl_client/config.py
 
 # gitlab_curl_client/config.py
 
+```python
 # Mapping of friendly names to IDs (adjust these as needed)
 GROUP_IDS = {
     "PTO": 23,
@@ -1137,7 +1164,7 @@ PROJECT_IDS = {
     "PTO-Project": 101,
     # add other projects as needed
 }
-
+```
 
 
 ⸻
@@ -1146,6 +1173,7 @@ File: gitlab_curl_client/client.py
 
 # gitlab_curl_client/client.py
 
+```python 
 import subprocess
 import json
 import os
@@ -1236,12 +1264,12 @@ class GitLabClient:
         endpoint = f"/api/v4/projects/{project_identifier}/issues?labels={encoded_label}"
         return self._run_curl("GET", endpoint)
 
-
+```
 
 ⸻
 
 File: gitlab_curl_client/utils.py
-
+```python 
 # gitlab_curl_client/utils.py
 
 def print_markdown_table(data):
@@ -1266,13 +1294,13 @@ def print_markdown_table(data):
         print("| " + " | ".join(row) + " |")
 
 
-
+```
 ⸻
 
 File: gitlab_curl_client/cli.py
 
 (This is an optional CLI interface if you want to run simple commands.)
-
+```python 
 # gitlab_curl_client/cli.py
 
 import argparse
@@ -1301,14 +1329,14 @@ def main():
 if __name__ == "__main__":
     main()
 
-
+```
 
 ⸻
 
 File: link_issues.py
 
 This is the standalone script that uses the package to perform the specific linking logic. Save this file at the root level (outside the gitlab_curl_client folder).
-
+```python 
 #!/usr/bin/env python3
 import argparse
 import os
@@ -1396,13 +1424,13 @@ if __name__ == "__main__":
     main()
 
 
-
+```
 ⸻
 
 File: setup.py
 
 (This file allows you to install your package locally.)
-
+```python 
 from setuptools import setup, find_packages
 
 setup(
@@ -1422,7 +1450,7 @@ setup(
     ],
 )
 
-
+```
 
 ⸻
 
@@ -1446,6 +1474,7 @@ From the package root, run:
 ```bash
 python setup.py sdist bdist_wheel
 pip install .
+```
 
 Usage
 
@@ -1490,6 +1519,7 @@ Below is the complete package with modifications:
 
 Package Structure
 
+```txt
 gitlab_curl_client/
 ├── __init__.py
 ├── config.py
@@ -1499,7 +1529,7 @@ gitlab_curl_client/
 link_issues.py
 setup.py
 README.md
-
+```
 
 
 ⸻
@@ -1508,6 +1538,7 @@ File: gitlab_curl_client/config.py
 
 (No file‑system changes needed here; it still contains our friendly‑name mappings.)
 
+```python 
 # gitlab_curl_client/config.py
 
 # Mapping of friendly names to IDs (adjust these as needed)
@@ -1520,7 +1551,7 @@ PROJECT_IDS = {
     "PTO-Project": 101,
     # add other projects as needed
 }
-
+```
 
 
 ⸻
@@ -1529,6 +1560,7 @@ File: gitlab_curl_client/client.py
 
 (No file‑path operations occur here, so no changes are needed for pathlib in this module.)
 
+```python 
 # gitlab_curl_client/client.py
 
 import subprocess
@@ -1621,7 +1653,7 @@ class GitLabClient:
         endpoint = f"/api/v4/projects/{project_identifier}/issues?labels={encoded_label}"
         return self._run_curl("GET", endpoint)
 
-
+```
 
 ⸻
 
@@ -1629,6 +1661,7 @@ File: gitlab_curl_client/utils.py
 
 (No modifications are needed regarding file paths here, so it remains unchanged.)
 
+```python 
 # gitlab_curl_client/utils.py
 
 def print_markdown_table(data):
@@ -1652,7 +1685,7 @@ def print_markdown_table(data):
         row = [str(item.get(header, "")) for header in headers]
         print("| " + " | ".join(row) + " |")
 
-
+```
 
 ⸻
 
@@ -1660,6 +1693,7 @@ File: gitlab_curl_client/cli.py
 
 (This file remains largely the same; it simply uses the client.)
 
+```python 
 # gitlab_curl_client/cli.py
 
 import argparse
@@ -1688,7 +1722,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-
+```
 
 ⸻
 
@@ -1696,6 +1730,7 @@ File: link_issues.py
 
 (No direct file‑system operations occur here, so this script remains unchanged.)
 
+```python 
 #!/usr/bin/env python3
 import argparse
 import os
@@ -1782,7 +1817,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-
+```
 
 ⸻
 
@@ -1790,6 +1825,7 @@ File: setup.py
 
 Here we use pathlib to load the README file as the long description.
 
+```python 
 from setuptools import setup, find_packages
 from pathlib import Path
 
@@ -1816,7 +1852,7 @@ setup(
     ],
 )
 
-
+```
 
 ⸻
 
@@ -1842,6 +1878,7 @@ From the package root, run:
 ```bash
 python setup.py sdist bdist_wheel
 pip install .
+```
 
 Usage
 
@@ -1884,6 +1921,7 @@ In this design the methods are added to the client module so you can build progr
 
 Package Structure
 
+```txt
 gitlab_curl_client/
 ├── __init__.py
 ├── config.py
@@ -1893,12 +1931,13 @@ gitlab_curl_client/
 setup.py
 README.md
 
-
+```
 
 ⸻
 
 File: gitlab_curl_client/config.py
 
+```python
 # gitlab_curl_client/config.py
 
 # Mapping of friendly names to numeric IDs.
@@ -1916,12 +1955,13 @@ PROJECT_IDS = {
 DEFAULT_PER_PAGE = 100
 DEFAULT_TIMEOUT = 30  # seconds
 
-
+```
 
 ⸻
 
 File: gitlab_curl_client/exceptions.py
 
+```python
 # gitlab_curl_client/exceptions.py
 
 class GitLabClientError(Exception):
@@ -1940,7 +1980,7 @@ class APIError(GitLabClientError):
     """Raised when the API returns an error status."""
     pass
 
-
+```
 
 ⸻
 
@@ -1951,8 +1991,9 @@ Below is the complete client module with the new methods added. It now includes:
 • A method to get all issues (via pagination) that have a due date and one of a set of priority labels.
 • Methods to update an issue’s due date and its labels.
 
-# gitlab_curl_client/client.py
+# gitlab_curl_client/client.
 
+```python
 import subprocess
 import json
 import os
@@ -2155,7 +2196,7 @@ class GitLabClient:
         endpoint = f"/api/v4/projects/{project}/issues/{issue_iid}"
         return self._run_curl("PUT", endpoint, data=data)
 
-
+```
 
 ⸻
 
@@ -2165,6 +2206,7 @@ File: gitlab_curl_client/utils.py
 
 # gitlab_curl_client/utils.py
 
+```python
 from datetime import datetime, timedelta
 
 def print_markdown_table(data):
@@ -2201,7 +2243,7 @@ def iso8601_days_ago(days):
     past = datetime.utcnow() - timedelta(days=days)
     return past.isoformat() + "Z"
 
-
+```
 
 ⸻
 
@@ -2209,6 +2251,7 @@ File: setup.py
 
 (Uses pathlib to load the README file, as before.)
 
+```python
 from setuptools import setup, find_packages
 from pathlib import Path
 
@@ -2229,7 +2272,7 @@ setup(
     ],
 )
 
-
+```
 
 ⸻
 
@@ -2261,6 +2304,7 @@ pip install .
 
 Usage Example
 
+```python 
 from gitlab_curl_client.client import GitLabClient
 from gitlab_curl_client.utils import print_markdown_table
 
@@ -2277,7 +2321,7 @@ client.update_issue_due_date("PTO-Project", 42, "2025-12-31")
 # Update the labels on an issue.
 client.update_issue_labels("PTO-Project", 42, ["priority::a", "bug", "OJ-22"])
 
-
+```
 
 ⸻
 
@@ -2297,6 +2341,7 @@ Below is an example Python program that uses your GitLab client package to poll 
 
 You can save this as, for example, check_todos.py:
 
+```python
 #!/usr/bin/env python3
 import time
 import subprocess
@@ -2351,6 +2396,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
 
 How It Works
 	1.	Environment Variables:
@@ -2362,7 +2409,9 @@ It maintains a set of notified todo IDs. Only todos not in this set trigger a Ze
 	4.	Zenity Notification:
 When a new todo is found, the program runs the command
 
+```bash
 zenity --notification --text "New Todo: [title]\n[target_url]"
+```
 
 to display a desktop notification.
 

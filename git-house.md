@@ -42,39 +42,106 @@ So, if you’re stuck on “Version 15” (that fixed tag), you’re not getting
 
 """
 import sys
+import os
+import tempfile
+import shutil
 import git
 
-def generate_mermaid(repo_path):
-    # Open the repository
-    repo = git.Repo(repo_path)
+def generate_mermaid(repo):
+    # Build a mapping from commit hash to tags (a commit can have more than one tag)
+    tag_map = {}
+    for tag in repo.tags:
+        tag_map.setdefault(tag.commit.hexsha, []).append(tag.name)
+    
+    # Build a mapping from commit hash to branch names (for local branches)
+    branch_map = {}
+    for branch in repo.branches:
+        for commit in repo.iter_commits(branch.name):
+            branch_map.setdefault(commit.hexsha, set()).add(branch.name)
+    
+    # Similarly, add remote branch pointers to the branch_map
+    for remote in repo.remotes:
+        for ref in remote.refs:
+            for commit in repo.iter_commits(ref.name):
+                branch_map.setdefault(commit.hexsha, set()).add(ref.name)
     
     # Start building the Mermaid diagram
     mermaid_lines = ["```mermaid", "gitGraph"]
     
-    # Get the list of local branches
-    branches = repo.branches
+    # Helper function to build a commit line with additional details
+    def commit_line(commit):
+        short_sha = commit.hexsha[:7]
+        message = commit.message.splitlines()[0].replace('"', "'")
+        author = commit.author.name
+        commit_date = commit.committed_datetime.strftime("%Y-%m-%d")
+        details = f"{message} (by {author} on {commit_date})"
+        
+        # For merge commits, list parent's short SHAs; for single-parent, optionally add parent hash
+        if len(commit.parents) > 1:
+            parent_shas = ", ".join(p.hexsha[:7] for p in commit.parents)
+            details += f" [Merge: {parent_shas}]"
+        elif len(commit.parents) == 1:
+            parent_shas = commit.parents[0].hexsha[:7]
+            details += f" [Parent: {parent_shas}]"
+        
+        # Append branch pointers if available
+        if commit.hexsha in branch_map:
+            branches_here = ", ".join(sorted(branch_map[commit.hexsha]))
+            details += f" (in branches: {branches_here})"
+        
+        # Append tags if available
+        if commit.hexsha in tag_map:
+            tags = ", ".join(tag_map[commit.hexsha])
+            details += f" tag: {tags}"
+        
+        return f"   commit id: \"{short_sha}\" message: \"{details}\""
     
-    # For demonstration, we’ll iterate over each branch
-    for branch in branches:
+    # Process local branches first
+    mermaid_lines.append("%% Local Branches")
+    for branch in repo.branches:
         mermaid_lines.append(f"   branch {branch.name}")
-        # Get all commits for the branch, earliest first
         commits = list(repo.iter_commits(branch.name))
-        commits.reverse()
+        commits.reverse()  # earliest first
         for commit in commits:
-            # Use a short commit hash and the first line of the commit message
-            short_sha = commit.hexsha[:7]
-            message = commit.message.splitlines()[0].replace('"', "'")
-            mermaid_lines.append(f"   commit id: \"{short_sha}\" message: \"{message}\"")
+            mermaid_lines.append(commit_line(commit))
+    
+    # Process remote branches
+    mermaid_lines.append("%% Remote Branches")
+    for remote in repo.remotes:
+        for ref in remote.refs:
+            mermaid_lines.append(f"   branch {ref.name}")
+            commits = list(repo.iter_commits(ref.name))
+            commits.reverse()
+            for commit in commits:
+                mermaid_lines.append(commit_line(commit))
     
     mermaid_lines.append("```")
     return "\n".join(mermaid_lines)
 
+def main(repo_identifier):
+    temp_dir = None
+    # Determine if the repo_identifier is a local path.
+    if os.path.exists(repo_identifier):
+        repo = git.Repo(repo_identifier)
+    else:
+        # Assume it's a URL and clone it to a temporary directory.
+        temp_dir = tempfile.mkdtemp()
+        print(f"Cloning repository from {repo_identifier} to temporary directory...")
+        repo = git.Repo.clone_from(repo_identifier, temp_dir)
+    
+    try:
+        diagram = generate_mermaid(repo)
+        print(diagram)
+    finally:
+        # If we cloned into a temp directory, clean it up.
+        if temp_dir is not None:
+            shutil.rmtree(temp_dir)
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print("Usage: python git_to_mermaid.py /path/to/git/repo")
+        print("Usage: python git_to_mermaid.py /path/to/git/repo OR repository URL")
         sys.exit(1)
     
-    repo_path = sys.argv[1]
-    diagram = generate_mermaid(repo_path)
-    print(diagram)
+    repo_identifier = sys.argv[1]
+    main(repo_identifier)
 """

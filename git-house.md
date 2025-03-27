@@ -37,3 +37,44 @@ Now, here’s where the jargon can get annoying. Terms like “drop,” “snaps
 
 So, if you’re stuck on “Version 15” (that fixed tag), you’re not getting the benefits of all the modern improvements—just like trying to add a gourmet kitchen to an outdated house without the necessary renovations. Instead, using the main branch (your continuously updated, modern home) means you’re already set up with all the upgrades that support those coveted new features.
 
+
+---
+
+"""
+import sys
+import git
+
+def generate_mermaid(repo_path):
+    # Open the repository
+    repo = git.Repo(repo_path)
+    
+    # Start building the Mermaid diagram
+    mermaid_lines = ["```mermaid", "gitGraph"]
+    
+    # Get the list of local branches
+    branches = repo.branches
+    
+    # For demonstration, we’ll iterate over each branch
+    for branch in branches:
+        mermaid_lines.append(f"   branch {branch.name}")
+        # Get all commits for the branch, earliest first
+        commits = list(repo.iter_commits(branch.name))
+        commits.reverse()
+        for commit in commits:
+            # Use a short commit hash and the first line of the commit message
+            short_sha = commit.hexsha[:7]
+            message = commit.message.splitlines()[0].replace('"', "'")
+            mermaid_lines.append(f"   commit id: \"{short_sha}\" message: \"{message}\"")
+    
+    mermaid_lines.append("```")
+    return "\n".join(mermaid_lines)
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: python git_to_mermaid.py /path/to/git/repo")
+        sys.exit(1)
+    
+    repo_path = sys.argv[1]
+    diagram = generate_mermaid(repo_path)
+    print(diagram)
+"""

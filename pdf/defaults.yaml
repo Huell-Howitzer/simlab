@@ -1,0 +1,20 @@
+from: markdown
+to: pdf
+pdf-engine: xelatex
+template: mytemplate.tex
+output-file: output.pdf
+highlight-style: tango
+variables:
+  title: "My Custom Document"
+  author: "Your Name"
+  date: "May 2025"
+  toc: true
+  toc-depth: 2
+  fontsize: 12pt
+  papersize: a4
+  geometry:
+    - margin=1in
+  colorlinks: true
+  linkcolor: blue
+  urlcolor: blue
+  toccolor: blue

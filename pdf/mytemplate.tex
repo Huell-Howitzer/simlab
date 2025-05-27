@@ -1,0 +1,161 @@
+\documentclass[12pt]{article}
+\usepackage[a4paper, margin=1in, headheight=40pt]{geometry}
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{svg}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{framed}
+\usepackage{listings}
+\usepackage{titling}
+\usepackage{mdframed}
+
+% Colors and shading
+\definecolor{shadecolor}{RGB}{248,248,248}
+\definecolor{bannercolor}{RGB}{30,90,150}
+\definecolor{coverboxcolor}{RGB}{240,240,240}
+
+% Banner styling
+\newcommand{\banner}{
+  \noindent\colorbox{bannercolor}{%
+    \parbox{\dimexpr\textwidth-2\fboxsep\relax}{%
+      \color{white}\Large\bfseries\sffamily $title$
+    }%
+  }
+  \vspace{0.5cm}
+}
+
+% Code block styling
+\newenvironment{Highlighting}{}{}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+
+% Fix Python code block rendering
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color[rgb]{0.13,0.29,0.53}\bfseries,
+  stringstyle=\color[rgb]{0.31,0.60,0.02},
+  commentstyle=\color[rgb]{0.56,0.35,0.01}\itshape,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=5pt,
+  backgroundcolor=\color{shadecolor},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  frame=single,
+  tabsize=2,
+  captionpos=b,
+  breaklines=true,
+  breakatwhitespace=false,
+  escapeinside={(*@}{@*)},
+  morekeywords={as, with, lambda, yield},
+}
+
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+
+% Setup fancy headers with SVG logo
+\pagestyle{fancy}
+\fancyhead[L]{\leftmark}
+\fancyhead[C]{}
+\fancyhead[R]{\includesvg[height=1cm]{143}}
+\fancyfoot[C]{\thepage}
+
+% Document info
+\title{$title$}
+\author{$author$}
+\date{$date$}
+
+% Create a custom coversheet
+\newcommand{\makecoversheet}{
+  \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries $title$\par}
+    \vspace{1.5cm}
+    {\Large\itshape $author$\par}
+    \vspace{1cm}
+    {\large \today\par}
+    \vspace{2cm}
+    
+    \begin{mdframed}[backgroundcolor=coverboxcolor, linewidth=1pt, roundcorner=10pt]
+      \begin{center}
+        \Large\textbf{Document Information}
+      \end{center}
+      \vspace{0.5cm}
+      \begin{description}
+        $if(subtitle)$
+        \item[Subtitle:] $subtitle$
+        $endif$
+        $if(version)$
+        \item[Version:] $version$
+        $endif$
+        $if(status)$
+        \item[Status:] $status$
+        $endif$
+        $if(date)$
+        \item[Date:] $date$
+        $endif$
+        $if(keywords)$
+        \item[Keywords:] $keywords$
+        $endif$
+      \end{description}
+    \end{mdframed}
+    
+    \vfill
+    $if(logo)$
+    \includegraphics[width=0.4\textwidth]{$logo$}
+    $endif$
+  \end{titlepage}
+}
+
+\begin{document}
+
+% Create coversheet
+\makecoversheet
+
+% Add banner to each page
+\banner
+
+$if(toc)$
+{
+\hypersetup{linkcolor=black}
+\tableofcontents
+\newpage
+}
+$endif$
+
+$body$
+
+\end{document}

@@ -1,0 +1,4 @@
+
+Qpython:S1481"-Replace unused local variable "fig" with "_".(›‡Ğ„ıÿÿÿÿ8®°×âÈ1
+hpython:S67115"DUse a "numpy.random.Generator" here instead of this legacy function.(ÍÀ–ëşÿÿÿÿ8óÀÒûĞ1
+hpython:S67116"DUse a "numpy.random.Generator" here instead of this legacy function.(É©Áûÿÿÿÿ8ôÀÒûĞ1

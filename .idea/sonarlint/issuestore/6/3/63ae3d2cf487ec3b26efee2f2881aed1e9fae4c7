@@ -1,0 +1,9 @@
+
+npython:S11920"JDefine a constant instead of duplicating this literal 'font.size' 4 times.(µÀ™ıÿÿÿÿ8ûùƒ¥Ë1
+kpython:S107"MMethod "__init__" has 17 parameters, which is greater than the 13 authorized.(Áÿû…8ûùƒ¥Ë1
+Ppython:S1172/",Remove the unused function parameter "text".(Á‘Áıÿÿÿÿ8üùƒ¥Ë1
+=python:S125;"Remove this commented out code.(¿×Ÿ8üùƒ¥Ë1
+Kpython:S1172’"+Remove the unused function parameter "fig".(úïÄ8üùƒ¥Ë1
+Kpython:S1172Ÿ"+Remove the unused function parameter "fig".(—ÅìÇ8üùƒ¥Ë1
+dpython:S6711±"DUse a "numpy.random.Generator" here instead of this legacy function.(ÿÍí¯8üùƒ¥Ë1
+ipython:S6711²"DUse a "numpy.random.Generator" here instead of this legacy function.(ô°â¡ùÿÿÿÿ8üùƒ¥Ë1

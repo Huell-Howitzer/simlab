@@ -118,7 +118,12 @@ def safe_rename_script(file_path, issue_id):
 
 def run_script(dir_path, script_path):
     print(f"Running script {script_path} in directory {dir_path}")
-    subprocess.run(["python3", script_path], cwd=dir_path, check=True)
+    ext = os.path.splitext(script_path)[1].lower()
+
+    if ext == ".py":
+        subprocess.run(["python3", script_path], cwd=dir_path, check=True)
+    else:
+        subprocess.run(["bash", script_path], cwd=dir_path, check=True)
 
 
 # === MAIN LOOP ===

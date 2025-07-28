@@ -127,3 +127,160 @@ if __name__ == "__main__":
 We can further upgrade to a context manager (with with syntax) or make the callback async-safe.
 
 Would you like to turn this into a class-based or @contextmanager-based version?
+
+
+---
+
+---
+
+Great! Let’s turn this into a context manager using Python’s @contextmanager decorator. This gives you clean, readable code with a with block that:
+	•	Sets up shared memory
+	•	Yields control to your subprocess or env-logic
+	•	Cleans up afterward
+	•	Returns the environment variables so you can use or apply them
+
+⸻
+
+✅ Step-by-Step
+
+We’ll build:
+	•	A context manager: capture_env_from_shared_memory(...)
+	•	A subprocess-based child (env_setter.py) — same as before
+	•	A main.py that uses with to capture and apply the environment
+
+⸻
+
+🧰 1. Context Manager Module: env_loader.py
+
+# env_loader.py
+import os
+import json
+from contextlib import contextmanager
+from multiprocessing import shared_memory
+
+@contextmanager
+def capture_env_from_shared_memory(shm_name="env_shm", shm_size=2048, apply_to_environ=True):
+    shm = shared_memory.SharedMemory(create=True, size=shm_size, name=shm_name)
+    shm.buf[:shm_size] = bytes(shm_size)
+
+    try:
+        # 👇 Yield the name so the user can pass it to the subprocess
+        yield shm_name
+
+        # 🧠 Read results after the block
+        raw = bytes(shm.buf[:shm_size]).rstrip(b'\x00')
+        if not raw:
+            print("[env_loader] No data received.")
+            yield {}
+
+        env_vars = json.loads(raw.decode())
+        print(f"[env_loader] Received env vars: {env_vars}")
+
+        if apply_to_environ:
+            for k, v in env_vars.items():
+                os.environ[k] = v
+                print(f"[env_loader] Applied {k} = {v}")
+
+        yield env_vars
+
+    finally:
+        shm.close()
+        shm.unlink()
+
+
+⸻
+
+🧒 2. Subprocess Script: env_setter.py
+
+Same as before (no changes needed):
+
+# env_setter.py
+import sys
+import json
+from multiprocessing import shared_memory
+
+def get_env_vars():
+    return {
+        "API_KEY": "abc123",
+        "DEBUG": "true",
+        "REGION": "us-west-1"
+    }
+
+def main():
+    shm_name = sys.argv[1]
+    shm = shared_memory.SharedMemory(name=shm_name)
+    encoded = json.dumps(get_env_vars()).encode()
+    shm.buf[:len(encoded)] = encoded
+    shm.close()
+
+if __name__ == "__main__":
+    main()
+
+
+⸻
+
+▶️ 3. Main Program Using with Block: main.py
+
+# main.py
+import subprocess
+from env_loader import capture_env_from_shared_memory
+
+def main():
+    print("Before:")
+    print("DEBUG =", os.environ.get("DEBUG"))
+
+    with capture_env_from_shared_memory() as shm_name:
+        # This is your custom logic:
+        subprocess.run(["python3", "env_setter.py", shm_name], check=True)
+    # After block, env vars are automatically loaded
+
+    print("\nAfter:")
+    print("DEBUG =", os.environ.get("DEBUG"))
+    print("API_KEY =", os.environ.get("API_KEY"))
+    print("REGION =", os.environ.get("REGION"))
+
+if __name__ == "__main__":
+    main()
+
+
+⸻
+
+🧼 Optional: Don’t Apply to os.environ Automatically
+
+If you want full control:
+
+with capture_env_from_shared_memory(apply_to_environ=False) as shm_name:
+    subprocess.run(["python3", "env_setter.py", shm_name])
+
+You can then manually update os.environ.
+
+⸻
+
+✅ Output Example
+
+Before:
+DEBUG = None
+[env_loader] Received env vars: {'API_KEY': 'abc123', 'DEBUG': 'true', 'REGION': 'us-west-1'}
+[env_loader] Applied API_KEY = abc123
+[env_loader] Applied DEBUG = true
+[env_loader] Applied REGION = us-west-1
+
+After:
+DEBUG = true
+API_KEY = abc123
+REGION = us-west-1
+
+
+⸻
+
+🔁 Recap
+
+Component	Purpose
+capture_env_from_shared_memory()	Context manager to manage shared memory IPC
+env_setter.py	Subprocess that writes env vars to shared memory
+main.py	Runs subprocess, captures, and applies environment
+
+
+⸻
+
+Would you like this bundled into a mini pip-installable tool (e.g. envshare) with CLI support too?
